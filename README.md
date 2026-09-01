@@ -87,8 +87,6 @@
    * Email: admin@example.com
    * Пароль: 123456
 
-3. Open `http://localhost:3000` in your browser.
-
 ## 🐳 Справочник команд Docker и Docker Compose
 
 Готовая шпаргалка по управлению контейнерами, образами, томами и базой данных проекта.
