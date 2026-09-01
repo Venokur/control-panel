@@ -70,7 +70,7 @@
 
 ## ⚡ Быстрый старт (Docker Compose)
 
-1. Запуск проекта:
+1. Запуск проекта:  
    Запустите все сервисы (Frontend, Backend, PostgreSQL) одной командой:
    ```bash
    docker compose up --build -d
