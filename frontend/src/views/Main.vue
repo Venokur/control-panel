@@ -105,7 +105,7 @@ import {
   IconUserPlus,
 } from "../components/icons/icons";
 import ModalWindow from "@/components/ModalWindow.vue";
-import { useToast } from "../components/composable/vToast";
+import { useToast } from "../composable/vToast";
 import TextInput from "@/components/TextInput.vue";
 
 const toast = useToast();
