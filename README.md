@@ -140,9 +140,9 @@
   ```bash
   docker exec -it app_postgres psql -U postgres -d app_db
 
-## Design Notes
+## Примечания по дизайну
 
-- CSS custom properties (`--primary`, `--bg-main`, etc.) define the design system tokens
-- The layout uses CSS Grid and Flexbox for responsive behavior
-- Media queries at 900px and 640px breakpoints handle tablet/mobile adaptations
-- The sidebar collapses to a compact icon-only view when toggled
+- Системные токены дизайна определяются через пользовательские свойства CSS (`--primary`, `--bg-main` и т. д.)
+- Вёрстка использует CSS Grid и Flexbox для обеспечения адаптивности
+- Адаптация под планшеты и мобильные устройства реализована с помощью медиа-запросов на точках останова (breakpoints) 900px и 640px
+- Боковая панель (sidebar) сворачивается в компактный режим «только иконки» при переключении
