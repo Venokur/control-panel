@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite App</title>
+
+    <link rel="stylesheet" href="./src/assets/base.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Этот блок автоматически заменяется при app.mount('#app') -->
+      <div class="app-initial-loader">
+        <div class="loader-card">
+          <!-- Логотип бренда VueApp -->
+          <div class="loader-logo">
+            <svg viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M78.8 10L64 35.4L49.2 10H0L64 120L128 10H78.8Z" fill="#41B883" />
+              <path d="M78.8 10L64 35.4L49.2 10H25.6L64 76.8L102.4 10H78.8Z" fill="#34495E" />
+            </svg>
+            <span class="loader-logo-title">VueApp</span>
+          </div>
+
+          <!-- Спиннер -->
+          <div class="spinner-ring">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+
+          <!-- Текстовое сопровождение -->
+          <p class="loader-title">Загрузка системы...</p>
+          <p class="loader-subtitle">Пожалуйста, подождите несколько секунд</p>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

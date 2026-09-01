@@ -1,0 +1,36 @@
+/* Стили для всплывающих подсказок */
+.v-tooltip-popup {
+  background-color: var(--tooltip-bg);
+  color: var(--tooltip-color);
+  padding: var(--tooltip-padding);
+  border-radius: var(--tooltip-radius);
+  font-size: var(--tooltip-font-size);
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: var(--tooltip-shadow);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Закругленная стрелочка без анимационных сдвигов */
+.v-tooltip-popup::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background-color: var(--tooltip-bg);
+  border-radius: 1px;
+
+  /* Все трансформации объединены в одну строку */
+  transform: translate(-50%, -50%) rotate(45deg);
+
+  /* Отключаем переходы для самой стрелки, чтобы она не двигалась отдельно */
+  transition: none;
+}
+/* Стили для всплывающих подсказок */

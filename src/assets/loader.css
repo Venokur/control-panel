@@ -1,0 +1,99 @@
+/* Полноэкранный контейнер начальной загрузки */
+.app-initial-loader {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  background-color: #f8fafc;
+  box-sizing: border-box;
+}
+
+/* Карточка в стиле панели управления */
+.loader-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 48px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow:
+    0 10px 25px -5px rgba(15, 23, 42, 0.05),
+    0 8px 10px -6px rgba(15, 23, 42, 0.03);
+  border: 1px solid #f1f5f9;
+  text-align: center;
+}
+
+/* Логотип VueApp из шапки */
+.loader-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.loader-logo svg {
+  width: 32px;
+  height: 32px;
+}
+
+.loader-logo-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+/* Анимированное кольцо спиннера в фирменных цветах */
+.spinner-ring {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 20px;
+}
+
+.spinner-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border: 3.5px solid transparent;
+  border-radius: 50%;
+  animation: spinner-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #10b981 transparent transparent transparent;
+}
+
+.spinner-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+.spinner-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.spinner-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+
+@keyframes spinner-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Текст статуса загрузки */
+.loader-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 6px 0;
+}
+
+.loader-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
