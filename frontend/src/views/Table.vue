@@ -26,7 +26,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
-import { vTooltip } from "@/directives/vTooltip";
+import { vTooltip } from "../directives/vTooltip";
 import VirtualTable from "@/components/VirtualTable.vue";
 
 /*

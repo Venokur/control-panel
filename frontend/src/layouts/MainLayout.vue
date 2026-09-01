@@ -113,7 +113,7 @@ import {
   IconSearch,
   IconBell,
   IconTable,
-} from "@/components/icons/icons";
+} from "../components/icons/icons";
 import Toast from "@/components/Toast.vue";
 
 // Синхронная первичная проверка типа устройства

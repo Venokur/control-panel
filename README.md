@@ -1,87 +1,144 @@
-# Vue Dashboard — Панneau Control Panel
+# 🚀 Vue Dashboard & FastAPI Control Panel
 
-## Overview
+Полнофункциональное веб-приложение для панели управления (Dashboard), разработанное на связке **Vue 3**, **FastAPI**, **PostgreSQL** и **Docker**. Проект предоставляет готовую административную панель с JWT-аутентификацией, разделением на лейауты, асинхронными запросами к базе данных и интерактивными компонентами визуализации данных.
 
-A modern, responsive dashboard application built with **Vue 3**, **Vite** (a web-based IDE framework), and **Pinia** for state management. The project provides a full-featured admin panel with authentication, data visualization, and interactive UI components.
+---
 
-## Features
+## 📌 Основные возможности
 
-### Authentication System
-- Login page with email/password validation
-- JWT token storage in `localStorage`
-- Route guards that redirect unauthenticated users to `/login`
-- Protected routes that require valid tokens
-- Logout functionality that clears stored credentials
+### 🔐 Аутентификация и безопасность
+* **JWT-токены:** Асинхронная проверка токена с автоматической серверной валидацией (`/api/auth/me`).
+* **Навигационные хуки (Navigation Guards):** Современная защита маршрутов на базе `return` для разграничения гостевых и защищенных страниц.
+* **Централизованное хранилище:** Управление сессией через Pinia с сохранением токена в `localStorage`.
+* **Обработка ошибок:** Корректный вывод валидационных ошибок от Pydantic/FastAPI на стороне фронтенда.
+* **Автоматическая инициализация:** Создание учетной записи администратора по умолчанию через `init.sql`[cite: 1].
 
-### Dashboard Layout
-- **Header**: Logo, search bar (with mobile toggle), notification badge, and user profile avatar
-- **Sidebar**: Collapsible navigation menu with active state highlighting
-- **Main Content Area**: Responsive grid layout with multiple content sections
+### 🖥️ Структура интерфейса и страницы
+* **AuthLayout:** Минималистичный шаблон без панелей управления для страниц входа (`/auth/login`) и 404 (`NotFound`)[cite: 1].
+* **MainLayout:** Полноразмерный рабочий интерфейс с адаптивной шапкой, сворачиваемым сайдбаром и профилем пользователя[cite: 1].
+* **Главная (Main):** Карточки ключевых метрик, графики статистики, таймлайн активности и панель быстрых действий[cite: 1].
+* **Проекты (Project):** Интерфейс управления текущими задачами и инициативами.
+* **Таблица данных (Table):** Виртуализированный высокопроизводительный компонент таблицы (`DataTable.vue`), поддерживающий сортировку, подсказки и статусные бейджи для больших объемов данных[cite: 1].
 
-### Dashboard Components
-1. **Welcome Banner** — Gradient-stopped hero section with call-to-action button
-2. **Statistics Cards** — Four stat cards displaying metrics (users, revenue, orders, conversion rate) with trend indicators (positive/negative change badges)
-3. **Activity Timeline** — Vertical timeline showing recent system events with timestamps
-4. **Quick Actions Panel** — Action buttons for creating projects, uploading files, and inviting collaborators
-5. **Data Table** — Virtualized table component (`DataTable.vue`) supporting:
-   - 100,000 rows of mock data
-   - Column sorting
-   - Custom cell renderers (tooltips, growth tags, status badges)
+### 🧩 UI-компоненты и директивы
+* `ModalWindow` — Перетаскиваемое (Draggable) модальное окно со слотами для контента и кнопок действий[cite: 1].
+* `Button` — Универсальная кнопка со встроенным индикатором загрузки (спиннером)[cite: 1].
+* `DataTable` — Виртуализированная таблица для быстрой отрисовки десятков тысяч строк[cite: 1].
+* `vTooltip` — Кастомная директива Vue для всплывающих контекстных подсказок[cite: 1].
 
-### UI Components
-- `ModalWindow` — Draggable modal dialog with custom slots for content and footer buttons
-- `Button` — Loading state indicator with spinner animation
-- `DataTable` — High-performance virtualized table for large datasets
-- Custom directive: `vTooltip` for hover tooltips
+---
 
-## Tech Stack
+## 🛠️ Стек технологий
 
-| Layer | Technology |
-|-------|------------|
-| Framework | Vue 3 (Composition API) |
-| Build Tool | Vite |
-| Routing | vue-router |
-| State Management | Pinia |
-| Icons | Custom SVG icons (`components/icons/`) |
+| Уровень | Технологии | Назначение |
+|---|---|---|
+| **Frontend** | Vue 3 (Composition API), Vite, Vue Router 4/5, Pinia, Axios[cite: 1] | Клиентская часть и SPA-навигация[cite: 1] |
+| **Backend** | Python 3.12, FastAPI, SQLAlchemy 2.0, asyncpg, PyJWT, Uvicorn | Асинхронный REST API сервер |
+| **Database** | PostgreSQL 16 | Хранение данных с сохранением в Docker Volume |
+| **DevOps** | Docker, Docker Compose | Контейнеризация и оркестрация сервисов |
 
-## Project Structure
+---
 
-```
-src/
-├── assets/          # Static images and media
-├── components/        # Reusable UI components
-│   ├── icons/           # Icon SVGs (imported as Vue components)
-│   ├── DataTable.vue    # Virtualized table component
-│   └── ModalWindow.vue  # Draggable modal dialog
-├── directives/          # Custom Vue directives
-│   └── vTooltip.js      # Tooltip directive implementation
-├── stores/            # Pinia state stores
-│   └── auth.js           # Authentication store (login/logout/token)
-├── views/             # Page components
-│   ├── Main.vue         # Dashboard home page
-│   ├── Login.vue        # Authentication form
-│   └── NotFound.vue     # 404 error page
-└── router/            # Vue Router configuration
-    └── index.js         # Route definitions and navigation guards
-```
+## 📁 Структура проекта
 
-## Getting Started
+```text
+├── backend-phyton/
+│   ├── Dockerfile           # Сборка контейнера с Python и Uvicorn
+│   ├── main.py              # Эндпоинты FastAPI, CORS, JWT и модели БД
+│   └── requirements.txt     # Зависимости Python
+├── src/
+│   ├── assets/              # Стили, изображения и шрифты[cite: 1]
+│   ├── components/          # Переиспользуемые UI-компоненты (Button, ModalWindow, DataTable)[cite: 1]
+│   │   └── icons/           # Компоненты SVG-иконок[cite: 1]
+│   ├── directives/          # Пользовательские директивы (vTooltip)[cite: 1]
+│   ├── helpers/
+│   │   ├── api.js           # Экземпляр Axios с интерцепторами
+│   │   └── auth.js          # Promise-обертки для запросов авторизации
+│   ├── layouts/
+│   │   ├── AuthLayout.vue   # Лейаут для страниц без навигации (Login, 404)
+│   │   └── MainLayout.vue   # Основной лейаут (Header + Sidebar)
+│   ├── router/
+│   │   └── index.js         # Конфигурация маршрутов и guards
+│   ├── stores/
+│   │   └── auth.js          # Хранилище сессии и состояния авторизации (Pinia)[cite: 1]
+│   └── views/               # Страницы приложения (Main, Project, Table, Login, NotFound)[cite: 1]
+├── docker-compose.yml       # Конфигурация мультиконтейнерного окружения
+├── init.sql                 # SQL-скрипт инициализации схемы и админа
+├── package.json             # Зависимости и скрипты фронтенда[cite: 1]
+└── README.md
 
-1. Install dependencies:
+## ⚡ Быстрый старт (Docker Compose)
+
+1. Запуск проекта:
+   ### Запустите все сервисы (Frontend, Backend, PostgreSQL) одной командой:
    ```bash
-   npm install
+   docker compose up --build -d
    ```
 
-2. Start the development server:
-   ```bash
-   npm run dev
-   ```
+2. Доступ к сервисам:
+   * 🌐 Frontend: http://localhost:5173 (или http://localhost:3000)
+   * ⚙️ Backend API: http://localhost:8000
+   * 📖 Интерактивная документация (Swagger UI): http://localhost:8000/docs
+   * 📑 Альтернативная документация (ReDoc): http://localhost:8000/redoc
+
+3. Данные для входа по умолчанию:
+   * Email: admin@example.com
+   * Пароль: 123456
 
 3. Open `http://localhost:3000` in your browser.
 
-### Default Login Credentials
-- **Email**: `admin@example.com`
-- **Password**: `123456`
+## 🐳 Справочник команд Docker и Docker Compose
+
+Готовая шпаргалка по управлению контейнерами, образами, томами и базой данных проекта.
+
+---
+
+### 1. 🚀 Сборка и запуск сервисов
+
+| Команда | Описание |
+|---|---|
+| `docker compose up -d` | Запуск всех сервисов в фоновом режиме (detached mode) |
+| `docker compose up --build -d` | Пересборка образов и запуск всех сервисов |
+| `docker compose up --build -d backend` | Пересборка и перезапуск только контейнера бэкенда |
+| `docker compose up --build -d frontend` | Пересборка и перезапуск только контейнера фронтенда |
+| `docker compose build --no-cache` | Полная пересборка образов без использования слоя кэша |
+
+---
+
+### 2. 🛑 Остановка и управление жизненным циклом
+
+| Команда | Описание |
+|---|---|
+| `docker compose stop` | Остановка всех контейнеров без удаления данных и сети |
+| `docker compose start` | Возобновление работы остановленных контейнеров |
+| `docker compose restart` | Перезапуск всех сервисов |
+| `docker compose restart backend` | Перезапуск конкретного сервиса (например, `backend`) |
+| `docker compose down` | Остановка и удаление контейнеров и внутренней сети |
+| `docker compose down -v` | **Полный сброс:** удаление контейнеров, сетей и томов данных (Volumes) БД |
+
+> ⚠️ **Важно:** Флаг `-v` полностью удаляет данные PostgreSQL. Используйте его, если нужно заново применить начальные скрипты инициализации (`init.sql`).
+
+---
+
+### 3. 📊 Мониторинг, логи и диагностика
+
+| Команда | Описание |
+|---|---|
+| `docker compose ps` | Список работающих контейнеров, их статус и проброшенные порты |
+| `docker compose logs -f` | Просмотр объединенного потока логов всех сервисов в реальном времени |
+| `docker compose logs -f backend` | Просмотр логов только бэкенда (удобно для отлова ошибок 500 и CORS) |
+| `docker compose logs -f frontend` | Просмотр логов сборщика Vite |
+| `docker compose logs -f db` | Просмотр логов базы данных PostgreSQL |
+| `docker compose top` | Отображение запущенных процессов внутри контейнеров |
+
+---
+
+### 4. 💻 Выполнение команд внутри контейнеров (CLI)
+
+#### Работа с базой данных PostgreSQL
+* **Подключение к интерактивной консоли `psql`:**
+  ```bash
+  docker exec -it app_postgres psql -U postgres -d app_db
 
 ## Design Notes
 

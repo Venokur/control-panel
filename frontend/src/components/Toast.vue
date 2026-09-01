@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-import { useToast } from "@/components/composable/vToast";
+import { useToast } from "./composable/vToast";
 
 const toastService = useToast();
 const positions = ["top-right", "top-left", "bottom-right", "bottom-left"];

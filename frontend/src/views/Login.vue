@@ -66,23 +66,26 @@ const form = reactive({
 const isLoading = ref(false);
 const errorMessage = ref("");
 
-const handleLogin = async () => {
+const handleLogin = () => {
   errorMessage.value = "";
   isLoading.value = true;
 
-  try {
-    await authStore.login({
+  // Вызов метода authStore.login, который возвращает Promise из хелпера
+  authStore
+    .login({
       email: form.email,
       password: form.password,
+    })
+    .then(() => {
+      const redirectPath = route.query.redirect || "/";
+      router.push(redirectPath);
+    })
+    .catch((error) => {
+      errorMessage.value = error.message || "Произошла ошибка при входе";
+    })
+    .finally(() => {
+      isLoading.value = false;
     });
-
-    const redirectPath = route.query.redirect || "/";
-    router.push(redirectPath);
-  } catch (error) {
-    errorMessage.value = error.message || "Произошла ошибка при входе";
-  } finally {
-    isLoading.value = false;
-  }
 };
 </script>
 
@@ -226,7 +229,6 @@ const handleLogin = async () => {
 .image-section {
   flex: 1;
   position: relative;
-  /* Изображение из Unsplash со стильной современной абстракцией */
   background-image: url("@/assets/image/image-1.avif?q=80&w=1000&auto=format&fit=crop");
   background-size: cover;
   background-position: center;
@@ -272,7 +274,6 @@ const handleLogin = async () => {
   }
 
   .image-section {
-    /*display: none;*/ /* Скрываем картинку на смартфонах для компактности */
     order: -1;
   }
 
