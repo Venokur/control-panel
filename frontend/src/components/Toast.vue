@@ -3,21 +3,19 @@
     <div v-for="pos in positions" :key="pos" :class="['toast-wrapper', pos]">
       <TransitionGroup name="toast-stack">
         <div
-          v-for="(toast, index) in getToastsByPosition(pos)"
+          v-for="(toast, index) in toastsByPosition[pos]"
           :key="toast.id"
           :class="['toast-item', pos]"
           :style="{
-            '--index': getToastsByPosition(pos).length - 1 - index,
+            '--index': toastsByPosition[pos].length - 1 - index,
             '--z-index': index + 1,
           }"
         >
           <div class="toast-card">
             <div class="toast-header">
               <h4 class="toast-title">{{ toast.title }}</h4>
-              <button class="toast-close" aria-label="Close" @click="toastService.remove(toast.id)">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M1 1L11 11M1 11L11 1" stroke="#4A5568" stroke-width="1.5" stroke-linecap="round" />
-                </svg>
+              <button class="toast-close" aria-label="Закрыть" @click="toastService.remove(toast.id)">
+                <IconClose :size="12" :stroke-width="1.5" />
               </button>
             </div>
             <p class="toast-message">{{ toast.message }}</p>
@@ -29,14 +27,18 @@
 </template>
 
 <script setup>
-import { useToast } from "../composable/vToast";
+import { computed } from "vue";
+import { useToast } from "@/composable/vToast";
+import { IconClose } from "./icons/icons";
 
 const toastService = useToast();
 const positions = ["top-right", "top-left", "bottom-right", "bottom-left"];
 
-const getToastsByPosition = (pos) => {
-  return toastService.toasts.filter((t) => t.position === pos).slice(-3);
-};
+const toastsByPosition = computed(() =>
+  Object.fromEntries(
+    positions.map((pos) => [pos, toastService.toasts.filter((t) => t.position === pos).slice(-3)]),
+  ),
+);
 </script>
 
 <style scoped>
@@ -139,6 +141,7 @@ const getToastsByPosition = (pos) => {
   border-radius: 4px;
   display: flex;
   align-items: center;
+  color: #4a5568;
 }
 
 .toast-close:hover {

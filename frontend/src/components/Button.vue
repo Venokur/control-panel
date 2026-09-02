@@ -1,7 +1,13 @@
 <template>
-  <button type="submit" :disabled="isLoading" class="submit-btn">
-    <span v-if="isLoading" class="loader"></span>
-    <span v-else>{{ text }}</span>
+  <button
+    :type="type"
+    class="submit-btn"
+    :class="`submit-btn--${variant}`"
+    :disabled="disabled || isLoading"
+    :aria-busy="isLoading"
+  >
+    <span v-if="isLoading" class="loader" aria-hidden="true"></span>
+    <slot v-else>{{ text }}</slot>
   </button>
 </template>
 
@@ -11,9 +17,21 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
   text: {
     type: String,
     default: "Кнопка",
+  },
+  type: {
+    type: String,
+    default: "submit",
+  },
+  variant: {
+    type: String,
+    default: "primary",
   },
 });
 </script>
@@ -29,12 +47,19 @@ defineProps({
   font-size: 1rem;
   font-weight: 600;
   color: #ffffff;
-  background: #10b981;
+  background: var(--primary);
   border: none;
   border-radius: 12px;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
   transition: all 0.2s ease;
+}
+
+.submit-btn--secondary {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  box-shadow: none;
 }
 
 .submit-btn:hover:not(:disabled) {
@@ -47,7 +72,7 @@ defineProps({
   cursor: not-allowed;
 }
 
-/* Indicator loader */
+/* Индикатор загрузки */
 .loader {
   width: 20px;
   height: 20px;

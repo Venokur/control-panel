@@ -1,25 +1,38 @@
 <template>
-  <div ref="cardRef" class="virtual-table-card" :style="cardStyle">
+  <div ref="cardRef" class="virtual-table-card" :style="rootCardStyle">
     <!-- 1. Десктопная шапка таблицы -->
     <div v-if="!isMobile" class="table-header-wrapper" :style="{ paddingRight: `${scrollbarWidth}px` }">
       <table class="virtual-table">
         <colgroup>
-          <col v-for="col in columns" :key="col.key" :style="{ width: col.width || '1fr' }" />
+          <col v-for="col in columns" :key="col.key" :style="col.width ? { width: col.width } : {}" />
         </colgroup>
         <thead>
           <tr>
             <th
               v-for="col in columns"
               :key="col.key"
+              role="columnheader"
+              :aria-sort="
+                col.sortable
+                  ? sortKey === col.key
+                    ? sortOrder === 'asc'
+                      ? 'ascending'
+                      : 'descending'
+                    : 'none'
+                  : undefined
+              "
+              :tabindex="col.sortable && !isAutoScrollEnabled ? 0 : -1"
               :class="{
                 'sortable-th': col.sortable && !isAutoScrollEnabled,
                 'disabled-th': col.sortable && isAutoScrollEnabled,
               }"
               @click="col.sortable && handleSort(col.key)"
+              @keydown.enter.prevent="col.sortable && handleSort(col.key)"
+              @keydown.space.prevent="col.sortable && handleSort(col.key)"
             >
               <div class="header-cell-content">
                 <span>{{ col.label }}</span>
-                <span v-if="col.sortable" class="sort-icon">
+                <span v-if="col.sortable" class="sort-icon" aria-hidden="true">
                   <template v-if="sortKey === col.key">
                     {{ sortOrder === "asc" ? "▲" : "▼" }}
                   </template>
@@ -50,7 +63,7 @@
           :style="{ transform: `translate3d(0, ${virtualState.offsetY}px, 0)` }"
         >
           <colgroup>
-            <col v-for="col in columns" :key="col.key" :style="{ width: col.width || '1fr' }" />
+            <col v-for="col in columns" :key="col.key" :style="col.width ? { width: col.width } : {}" />
           </colgroup>
           <tbody>
             <tr
@@ -156,7 +169,7 @@
       </div>
     </div>
 
-    <!-- 3. ЛОАДЕР -->
+    <!-- 3. Лоадер -->
     <transition name="fade-loader">
       <div v-if="isLoading" class="table-loader-overlay" :class="{ 'is-mobile-loader': isMobile }">
         <slot name="loader">
@@ -242,6 +255,7 @@ let isTicking = false;
 let resizeObserver = null;
 let rafId = null;
 let currentTaskId = 0;
+let previousSourceRef = null;
 let previousDataLength = 0;
 
 const stringCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
@@ -249,20 +263,22 @@ const stringCollator = new Intl.Collator(undefined, { numeric: true, sensitivity
 const isMobile = computed(() => containerWidth.value < props.mobileBreakpoint);
 const currentRowHeight = computed(() => (isMobile.value ? props.mobileRowHeight : props.rowHeight));
 
-const cardStyle = computed(() => {
-  if (props.height !== null && props.height !== undefined) {
-    const formattedHeight = typeof props.height === "number" ? `${props.height}px` : props.height;
-    return {
-      height: formattedHeight,
-      minHeight: "0",
-      flex: "1 1 auto",
-    };
-  }
-  return {
-    height: "100%",
-    minHeight: "350px",
-    maxHeight: "calc(100dvh - 20px)",
+const rootCardStyle = computed(() => {
+  const base = {
+    "--highlight-duration": `${props.highlightDuration}ms`,
   };
+
+  if (props.height !== null && props.height !== undefined) {
+    base.height = typeof props.height === "number" ? `${props.height}px` : props.height;
+    base.minHeight = "0";
+    base.flex = "1 1 auto";
+  } else {
+    base.height = "100%";
+    base.minHeight = "350px";
+    base.maxHeight = "calc(100dvh - 20px)";
+  }
+
+  return base;
 });
 
 const totalHeight = computed(() => processedData.value.length * currentRowHeight.value);
@@ -342,61 +358,96 @@ const getRawVal = (item, key) => {
   if (!item) return "";
   const val = item[key];
   if (val && typeof val === "object") {
-    return val.label || val.name || val.text || "";
+    return val.label ?? val.name ?? val.text ?? "";
   }
   return val ?? "";
 };
 
-const evalCondition = (rawVal, strRaw, numRaw, isRawNum, rule, row) => {
+const evalCondition = (rawVal, rule, row) => {
   if (rule.isCustom) {
     return rule.fn(rawVal, row);
   }
 
+  let _str = null;
+  const getStr = () => (_str !== null ? _str : (_str = String(rawVal ?? "").toLowerCase()));
+
+  let _num = null;
+  let _isNum = null;
+  const parseNum = () => {
+    if (_isNum === null) {
+      const parsed = Number(rawVal);
+      _isNum = !isNaN(parsed) && String(rawVal).trim() !== "";
+      _num = _isNum ? parsed : NaN;
+    }
+  };
+
   switch (rule.op) {
     case "contains":
     case "includes":
-      return strRaw.includes(rule.lowerStr);
+      return getStr().includes(rule.lowerStr);
 
     case "notContains":
     case "!contains":
-      return !strRaw.includes(rule.lowerStr);
+      return !getStr().includes(rule.lowerStr);
 
     case "equals":
     case "eq":
     case "==":
-      if (rule.isNum && isRawNum) return numRaw === rule.numVal;
-      return strRaw === rule.lowerStr;
+      if (rule.isNum) {
+        parseNum();
+        if (_isNum) return _num === rule.numVal;
+      }
+      return getStr() === rule.lowerStr;
 
     case "notEquals":
     case "neq":
     case "!=":
-      if (rule.isNum && isRawNum) return numRaw !== rule.numVal;
-      return strRaw !== rule.lowerStr;
+      if (rule.isNum) {
+        parseNum();
+        if (_isNum) return _num !== rule.numVal;
+      }
+      return getStr() !== rule.lowerStr;
 
     case "startsWith":
-      return strRaw.startsWith(rule.lowerStr);
+      return getStr().startsWith(rule.lowerStr);
 
     case "endsWith":
-      return strRaw.endsWith(rule.lowerStr);
+      return getStr().endsWith(rule.lowerStr);
 
     case "gt":
     case ">":
-      return isRawNum && rule.isNum ? numRaw > rule.numVal : rawVal > rule.origVal;
+      if (rule.isNum) {
+        parseNum();
+        if (_isNum) return _num > rule.numVal;
+      }
+      return rawVal > rule.origVal;
 
     case "gte":
     case ">=":
-      return isRawNum && rule.isNum ? numRaw >= rule.numVal : rawVal >= rule.origVal;
+      if (rule.isNum) {
+        parseNum();
+        if (_isNum) return _num >= rule.numVal;
+      }
+      return rawVal >= rule.origVal;
 
     case "lt":
     case "<":
-      return isRawNum && rule.isNum ? numRaw < rule.numVal : rawVal < rule.origVal;
+      if (rule.isNum) {
+        parseNum();
+        if (_isNum) return _num < rule.numVal;
+      }
+      return rawVal < rule.origVal;
 
     case "lte":
     case "<=":
-      return isRawNum && rule.isNum ? numRaw <= rule.numVal : rawVal <= rule.origVal;
+      if (rule.isNum) {
+        parseNum();
+        if (_isNum) return _num <= rule.numVal;
+      }
+      return rawVal <= rule.origVal;
 
     default:
-      return strRaw.includes(rule.lowerStr);
+      return getStr().includes(rule.lowerStr);
   }
 };
 
@@ -484,16 +535,12 @@ const validateRow = (row, config, cols) => {
     const group = columnGroups[g];
     const rawVal = getRawVal(row, group.key);
 
-    const strRaw = String(rawVal ?? "").toLowerCase();
-    const numRaw = Number(rawVal);
-    const isRawNum = !isNaN(numRaw) && String(rawVal).trim() !== "";
-
     const mRules = group.matchRules;
     const mLen = mRules.length;
     if (mLen > 0) {
       let matchPassed = false;
       for (let m = 0; m < mLen; m++) {
-        if (evalCondition(rawVal, strRaw, numRaw, isRawNum, mRules[m], row)) {
+        if (evalCondition(rawVal, mRules[m], row)) {
           matchPassed = true;
           break;
         }
@@ -505,7 +552,7 @@ const validateRow = (row, config, cols) => {
     const bLen = bRules.length;
     if (bLen > 0) {
       for (let b = 0; b < bLen; b++) {
-        if (!evalCondition(rawVal, strRaw, numRaw, isRawNum, bRules[b], row)) {
+        if (!evalCondition(rawVal, bRules[b], row)) {
           return false;
         }
       }
@@ -521,11 +568,7 @@ const validateRow = (row, config, cols) => {
 
       for (let c = 0; c < colsLen; c++) {
         const rawVal = getRawVal(row, cols[c].key);
-        const strRaw = String(rawVal ?? "").toLowerCase();
-        const numRaw = Number(rawVal);
-        const isRawNum = !isNaN(numRaw) && String(rawVal).trim() !== "";
-
-        if (evalCondition(rawVal, strRaw, numRaw, isRawNum, rule, row)) {
+        if (evalCondition(rawVal, rule, row)) {
           ruleMatchedAnyCol = true;
           break;
         }
@@ -540,7 +583,9 @@ const validateRow = (row, config, cols) => {
 
 const compareRowValues = (aVal, bVal, isAsc) => {
   let res = 0;
-  if (typeof aVal === "string" && typeof bVal === "string") {
+  if (typeof aVal === "number" && typeof bVal === "number") {
+    res = aVal - bVal;
+  } else if (typeof aVal === "string" && typeof bVal === "string") {
     res = stringCollator.compare(aVal, bVal);
   } else {
     if (aVal < bVal) res = -1;
@@ -626,7 +671,7 @@ const runAsyncProcessing = (isSilent = false) => {
     }
 
     if (index < total) {
-      if (window.requestIdleCallback) {
+      if (typeof window !== "undefined" && window.requestIdleCallback) {
         window.requestIdleCallback(processChunk, { timeout: 30 });
       } else {
         setTimeout(processChunk, 0);
@@ -646,7 +691,7 @@ const runAsyncProcessing = (isSilent = false) => {
 
 const formatValue = (val) => {
   if (typeof val === "object" && val !== null) {
-    return val.label || val.name || val.text || JSON.stringify(val);
+    return val.label ?? val.name ?? val.text ?? JSON.stringify(val);
   }
   return val;
 };
@@ -684,21 +729,33 @@ watch([compiledFilterConfig, sortKey, sortOrder], () => {
   runAsyncProcessing(false);
 });
 
+// Отслеживание изменений данных (и смены ссылки, и push мутаций через length)
 watch(
-  () => props.data.length,
-  (newLen) => {
-    const oldLen = previousDataLength;
+  [() => props.data, () => props.data?.length],
+  ([newData, newLen = 0]) => {
+    const isSameArray = previousSourceRef === newData;
+    const isAppendedOnly = isSameArray && newLen > previousDataLength && previousDataLength > 0;
+
+    const prevLength = previousDataLength;
+    previousSourceRef = newData;
     previousDataLength = newLen;
 
-    if (newLen > oldLen && oldLen > 0) {
-      const addedItems = props.data.slice(oldLen);
+    if (!newData || newLen === 0) {
+      processedData.value = [];
+      isLoading.value = false;
+      return;
+    }
+
+    if (isAppendedOnly) {
+      const addedItems = newData.slice(prevLength);
       const config = compiledFilterConfig.value;
       const cols = props.columns || [];
       const isFiltering = config.columnGroups.length > 0 || config.globalRules.length > 0;
 
-      const validAppends = !isFiltering ? addedItems : addedItems.filter((item) => validateRow(item, config, cols));
+      const validAppends = !isFiltering
+        ? addedItems
+        : addedItems.filter((item) => validateRow(item, config, cols));
 
-      // Подсвечиваем только одиночные добавления или небольшие пачки (до 500 шт.)
       if (validAppends.length > 0 && validAppends.length <= 500) {
         const addedIds = [];
         const currentHighlightSet = new Set(newRowKeys.value);
@@ -728,7 +785,6 @@ watch(
 
       if (validAppends.length > 0) {
         if (!sortKey.value) {
-          // Безопасное объединение без push(...spread)
           processedData.value = processedData.value.concat(validAppends);
         } else if (validAppends.length <= 100) {
           const nextArr = processedData.value.slice();
@@ -749,9 +805,11 @@ watch(
       runAsyncProcessing(true);
     }
   },
+  { flush: "sync" }
 );
 
 onMounted(() => {
+  previousSourceRef = props.data;
   previousDataLength = props.data ? props.data.length : 0;
   runAsyncProcessing(false);
   updateMetrics();
@@ -860,7 +918,7 @@ onUnmounted(() => {
   line-height: 1.4;
 }
 
-/* --- ОВЕРЛЕЙ ЛОАДЕРА --- */
+/* --- ЛОАДЕР --- */
 .table-loader-overlay {
   position: absolute;
   top: 48px;
@@ -1043,6 +1101,11 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
+.table-header-wrapper th:focus-visible {
+  outline: 2px solid #42b883;
+  outline-offset: -2px;
+}
+
 .sortable-th {
   cursor: pointer;
   user-select: none;
@@ -1093,7 +1156,7 @@ onUnmounted(() => {
 
 /* Изумрудная анимация добавления (десктоп) */
 .virtual-table-body :deep(tr.row-highlight-new) {
-  animation: pulseVueEmeraldRow 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: pulseVueEmeraldRow var(--highlight-duration, 2500ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .virtual-table-body :deep(tr.row-highlight-new:hover) {
@@ -1148,7 +1211,7 @@ onUnmounted(() => {
 }
 
 .mobile-card-item.row-highlight-new {
-  animation: pulseVueEmeraldCard 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: pulseVueEmeraldCard var(--highlight-duration, 2500ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .mobile-card-item.row-highlight-new:hover {

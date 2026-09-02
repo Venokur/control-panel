@@ -1,6 +1,6 @@
 <template>
   <div class="page-container">
-    <!-- Banner -->
+    <!-- Баннер -->
     <section class="banner">
       <div class="banner-text">
         <h1>Добро пожаловать в панель управления!</h1>
@@ -9,7 +9,7 @@
       <button class="btn btn-light">Смотреть отчет</button>
     </section>
 
-    <!-- Stats Grid -->
+    <!-- Сетка показателей -->
     <section class="stats-grid">
       <div v-for="stat in stats" :key="stat.id" class="card stat-card">
         <div class="stat-header">
@@ -27,9 +27,9 @@
       </div>
     </section>
 
-    <!-- Two Column Content Grid -->
+    <!-- Двухколоночная сетка контента -->
     <section class="grid-2col">
-      <!-- Activity Feed -->
+      <!-- Лента активности -->
       <div class="card">
         <div class="card-header">
           <h2>Последняя активность</h2>
@@ -49,13 +49,13 @@
         </div>
       </div>
 
-      <!-- Quick Actions -->
+      <!-- Быстрые действия -->
       <div class="card">
         <div class="card-header">
           <h2>Быстрые действия</h2>
         </div>
         <div class="action-stack">
-          <button class="btn btn-primary" @click="showModal = true">
+          <button class="btn btn-primary" @click="openModal">
             <IconPlus :size="18" />
             Создать проект
           </button>
@@ -75,8 +75,6 @@
       v-model="showModal"
       title="Новый проект"
       :preventBackdropClick="true"
-      @close="onModalClose"
-      @confirm="createNewProject"
     >
       <template #default>
         <p>Для создания нового проекта, пожалуйста, заполните форму ниже.</p>
@@ -86,15 +84,15 @@
       </template>
 
       <template #footer>
-        <button type="button" class="btn btn-secondary" @click="showModal = false">Отмена</button>
-        <button type="button" class="btn btn-primary" :disabled="false" @click="createNewProject">Создать</button>
+        <button type="button" class="btn btn-secondary" @click="closeModal">Отмена</button>
+        <button type="button" class="btn btn-primary" :disabled="!canCreate" @click="createNewProject">Создать</button>
       </template>
     </ModalWindow>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed, watch, markRaw } from "vue";
 import {
   IconUsers,
   IconDollar,
@@ -103,43 +101,20 @@ import {
   IconPlus,
   IconUpload,
   IconUserPlus,
-} from "../components/icons/icons";
+} from "@/components/icons/icons";
 import ModalWindow from "@/components/ModalWindow.vue";
-import { useToast } from "../composable/vToast";
+import { useToast } from "@/composable/vToast";
 import TextInput from "@/components/TextInput.vue";
 
 const toast = useToast();
 const showModal = ref(false);
 const textInputValue = ref("");
 
-const createNewProject = () => {
-  const newId = activities.value.length > 0 ? Math.max(...activities.value.map((a) => a.id)) + 1 : 1;
-
-  activities.value.push({
-    id: newId,
-    text: `Проект "${textInputValue.value || "Без названия"}" создан!`,
-    time: "Сейчас",
-  });
-
-  toast.add({
-    title: "Successfully completed",
-    message: "The task was completed successfully. You can now view the details.",
-    position: "bottom-left",
-    duration: 4000,
-  });
-
-  showModal.value = false;
-};
-
-const onModalClose = () => {
-  console.log("Модальное окно закрыто");
-};
-
 const stats = ref([
-  { id: 1, title: "Пользователи", value: "1,240", change: "+12.5%", isPositive: true, icon: IconUsers },
-  { id: 2, title: "Выручка", value: "$12,450", change: "+8.2%", isPositive: true, icon: IconDollar },
-  { id: 3, title: "Заказы", value: "384", change: "-2.1%", isPositive: false, icon: IconCart },
-  { id: 4, title: "Конверсия", value: "4.8%", change: "+1.4%", isPositive: true, icon: IconTrend },
+  { id: 1, title: "Пользователи", value: "1,240", change: "+12.5%", isPositive: true, icon: markRaw(IconUsers) },
+  { id: 2, title: "Выручка", value: "$12,450", change: "+8.2%", isPositive: true, icon: markRaw(IconDollar) },
+  { id: 3, title: "Заказы", value: "384", change: "-2.1%", isPositive: false, icon: markRaw(IconCart) },
+  { id: 4, title: "Конверсия", value: "4.8%", change: "+1.4%", isPositive: true, icon: markRaw(IconTrend) },
 ]);
 
 const activities = ref([
@@ -147,6 +122,49 @@ const activities = ref([
   { id: 2, text: "Успешная оплата подписки #4829", time: "45 мин назад" },
   { id: 3, text: "Создан новый проект «Mobile Redesign»", time: "2 часа назад" },
 ]);
+
+let nextActivityId =
+  activities.value.length > 0
+    ? Math.max(...activities.value.map((a) => a.id)) + 1
+    : 1;
+
+const canCreate = computed(() => textInputValue.value.trim().length > 0);
+
+// Сбрасываем поле ввода при каждом закрытии окна (крестик, «Отмена» или создание)
+watch(showModal, (isOpen) => {
+  if (!isOpen) {
+    textInputValue.value = "";
+  }
+});
+
+const openModal = () => {
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+};
+
+const createNewProject = () => {
+  if (!canCreate.value) {
+    return;
+  }
+
+  activities.value.push({
+    id: nextActivityId++,
+    text: `Проект "${textInputValue.value.trim()}" создан!`,
+    time: "Сейчас",
+  });
+
+  toast.add({
+    title: "Успешно выполнено",
+    message: "Проект создан. Вы можете просмотреть его в ленте активности.",
+    position: "bottom-left",
+    duration: 4000,
+  });
+
+  closeModal();
+};
 </script>
 
 <style scoped>

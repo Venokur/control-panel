@@ -1,36 +1,35 @@
 <script setup>
-import { computed } from 'vue'
+import { computed } from "vue";
+
+const modelValue = defineModel({
+  type: String,
+  default: "",
+});
 
 const props = defineProps({
-  modelValue: {
-    type: String,
-    default: ''
-  },
   label: {
     type: String,
-    default: ''
+    default: "",
   },
   placeholder: {
     type: String,
-    default: ''
+    default: "",
   },
   error: {
     type: String,
-    default: ''
+    default: "",
   },
   required: {
     type: Boolean,
-    default: false
+    default: false,
   },
   maxlength: {
     type: [Number, String],
-    default: null
-  }
-})
+    default: null,
+  },
+});
 
-defineEmits(['update:modelValue'])
-
-const charCount = computed(() => props.modelValue?.length || 0)
+const charCount = computed(() => modelValue.value?.length || 0);
 </script>
 
 <template>
@@ -49,11 +48,10 @@ const charCount = computed(() => props.modelValue?.length || 0)
       <input
         type="text"
         class="custom-input"
-        :value="modelValue"
         :placeholder="placeholder"
         :required="required"
         :maxlength="maxlength"
-        @input="$emit('update:modelValue', $event.target.value)"
+        v-model="modelValue"
       />
     </div>
 
@@ -96,7 +94,7 @@ const charCount = computed(() => props.modelValue?.length || 0)
   display: flex;
   align-items: center;
   background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0 12px;
   transition: all 0.2s ease;
@@ -104,7 +102,7 @@ const charCount = computed(() => props.modelValue?.length || 0)
 
 .input-container:focus-within {
   background-color: #ffffff;
-  border-color: #00b574;
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(0, 181, 116, 0.12);
 }
 
@@ -119,7 +117,7 @@ const charCount = computed(() => props.modelValue?.length || 0)
   outline: none;
   background: transparent;
   font-size: 14px;
-  color: #0f172a;
+  color: var(--text-main);
 }
 
 .custom-input::placeholder {

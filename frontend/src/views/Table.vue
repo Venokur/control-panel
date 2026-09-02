@@ -26,53 +26,10 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
-import { vTooltip } from "../directives/vTooltip";
+import { vTooltip } from "@/directives/vTooltip";
 import VirtualTable from "@/components/VirtualTable.vue";
 
-/*
-contains / includes (содержит, регистронезависимо)
-
-equals / eq / == (равно)
-
-notEquals / neq / != (не равно)
-
-startsWith (начинается с)
-
-endsWith (заканчивается с)
-
-gt / > (больше)
-
-gte / >= (больше или равно)
-
-lt / < (меньше)
-
-lte / <= (меньше или равно)
-
-custom (пользовательская функция (rowValue, filterValue, row) => boolean)
-
-**
-Глобальный поиск
-// Простой вариант
-{ key: '*', value: 'поисковый запрос' }
- // Вариант с оператором / кастомной функцией
- { key: 'global', operator: 'contains', value: 'поисковый запрос' }
-***
-Между разными колонками (status и growth) — логика AND (И).
-
-Внутри одной и той же колонки с несколькими значениями (например, статус "А" или "Б", либо growth "10.8" или "0") — по умолчанию логика OR (ИЛИ).
-
-Исключение для диапазонов (например, growth >= 10 и growth <= 50) — внутри одной колонки для операторов сравнения (>, >=, <, <=, !=) логика остается AND (И).
-*/
-
-const activeFilters = ref([
-  //{ key: 'global', operator: 'contains', value: 'Заблокирован' },
-  //{ key: "status", value: "Заблокирован", operator: "equals" },
-  //{ key: "growth", value: "10.8", operator: "equals" },
-  //{ key: "growth", value: "0", operator: "equals" },
-  //{ key: 'age', value: 18, operator: '>=' },
-  // Или кастомная функция:
-  // { key: 'tags', value: 'admin', operator: 'custom', fn: (val, filterVal) => val.includes(filterVal) }
-]);
+const activeFilters = ref([]);
 
 const columns = [
   { key: "id", label: "ID", width: "90px", sortable: true },
@@ -89,7 +46,7 @@ const statuses = [
 ];
 
 const items = ref(
-  Array.from({ length: 200000 }, (_, index) => ({
+  Array.from({ length: 2000 }, (_, index) => ({
     id: index + 1,
     name: `Иван Петров ${index + 1}`,
     email: `user${index + 1}@vueapp.ru`,

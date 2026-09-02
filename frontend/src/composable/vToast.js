@@ -13,7 +13,7 @@ export const useToast = () => {
 
     const toast = {
       id,
-      title: options.title || "Successfully completed",
+      title: options.title || "Успешно выполнено",
       message: options.message || "",
       position,
       duration: options.duration ?? 5000,

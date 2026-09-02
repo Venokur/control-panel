@@ -6,36 +6,27 @@
         :class="{ 'modal-container--scrolling': isBodyScrolling }"
         role="dialog"
         aria-modal="true"
-        ref="modalContent"
+        :aria-label="title || undefined"
         @click.stop
       >
-        <!-- Header -->
+        <!-- Шапка -->
         <header class="modal-header">
           <slot name="header">
             <h3 class="modal-title">{{ title || "Заголовок окна" }}</h3>
           </slot>
           <button type="button" class="modal-close-btn" aria-label="Закрыть" @click="close">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <IconClose :size="20" />
           </button>
         </header>
 
-        <!-- Body -->
+        <!-- Тело -->
         <div class="modal-body" ref="modalBody">
           <slot>
             <p>Контент модального окна.</p>
           </slot>
         </div>
 
-        <!-- Footer -->
+        <!-- Подвал -->
         <footer class="modal-footer" v-if="$slots.footer">
           <slot name="footer">
             <button type="button" class="btn btn-secondary" @click="close">Отмена</button>
@@ -49,13 +40,14 @@
 
 <script setup>
 import { ref, watch, onMounted, onUnmounted, nextTick } from "vue";
+import { IconClose } from "./icons/icons";
 
-// Определение пропсов на чистом JS
+const modelValue = defineModel({
+  type: Boolean,
+  required: true,
+});
+
 const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    required: true,
-  },
   title: {
     type: String,
     default: "",
@@ -64,16 +56,19 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  closeOnEscape: {
+    type: Boolean,
+    default: true,
+  },
 });
 
-// Определение событий
-const emit = defineEmits(["update:modelValue", "close", "confirm"]);
+const emit = defineEmits(["close", "confirm"]);
 
 const modalBody = ref(null);
 const isBodyScrolling = ref(false);
 
 const close = () => {
-  emit("update:modelValue", false);
+  modelValue.value = false;
   emit("close");
 };
 
@@ -83,15 +78,15 @@ const handleBackdropClick = () => {
   }
 };
 
-const setPageScrollable = (isScrollable) => {
-  if (isScrollable) {
-    document.body.style.overflow = "";
-    document.body.style.paddingRight = "";
-  } else {
-    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-    document.body.style.overflow = "hidden";
-    document.body.style.paddingRight = `${scrollBarWidth}px`;
-  }
+const lockBodyScroll = () => {
+  const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+  document.body.style.overflow = "hidden";
+  document.body.style.paddingRight = `${scrollBarWidth}px`;
+};
+
+const unlockBodyScroll = () => {
+  document.body.style.overflow = "";
+  document.body.style.paddingRight = "";
 };
 
 const checkBodyScrolling = () => {
@@ -100,26 +95,34 @@ const checkBodyScrolling = () => {
   }
 };
 
+const handleKeydown = (event) => {
+  if (props.closeOnEscape && event.key === "Escape" && modelValue.value) {
+    close();
+  }
+};
+
 watch(
-  () => props.modelValue,
+  () => modelValue.value,
   (newValue) => {
-    setPageScrollable(!newValue);
     if (newValue) {
-      nextTick(() => {
-        checkBodyScrolling();
-      });
+      lockBodyScroll();
+      nextTick(checkBodyScrolling);
+    } else {
+      unlockBodyScroll();
     }
   },
   { immediate: true },
 );
 
 onMounted(() => {
+  window.addEventListener("keydown", handleKeydown);
   window.addEventListener("resize", checkBodyScrolling);
 });
 
 onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeydown);
   window.removeEventListener("resize", checkBodyScrolling);
-  setPageScrollable(true);
+  unlockBodyScroll();
 });
 </script>
 
@@ -143,7 +146,7 @@ onUnmounted(() => {
 /* Контейнер модального окна */
 .modal-container {
   background-color: #ffffff !important;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
@@ -229,17 +232,17 @@ onUnmounted(() => {
 }
 
 .btn-primary {
-  background-color: #10b981;
+  background-color: var(--primary);
   color: #ffffff;
 }
 
 .btn-primary:hover {
-  background-color: #0ca678;
+  background-color: var(--primary-hover);
 }
 
 .btn-secondary {
   background-color: #ffffff;
-  border-color: #e2e8f0;
+  border-color: var(--border);
   color: #475569;
 }
 
