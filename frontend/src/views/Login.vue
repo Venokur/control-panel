@@ -3,15 +3,24 @@
     <div class="login-card">
       <!-- Левая секция: Форма -->
       <div class="form-section">
+        <div class="form-header">
+          <h1>Вход в систему</h1>
+          <p>Введите данные учётной записи, чтобы продолжить</p>
+        </div>
+
         <form @submit.prevent="handleLogin" class="login-form">
           <div class="form-group">
             <label for="email">Email</label>
             <input
               id="email"
               v-model.trim="form.email"
+              name="email"
               type="email"
+              autocomplete="email"
               placeholder="admin@example.com"
               :disabled="isLoading"
+              :aria-invalid="errorMessage ? true : undefined"
+              aria-describedby="login-error"
               required
             />
           </div>
@@ -21,14 +30,18 @@
             <input
               id="password"
               v-model="form.password"
+              name="password"
               type="password"
+              autocomplete="current-password"
               placeholder="••••••••"
               :disabled="isLoading"
+              :aria-invalid="errorMessage ? true : undefined"
+              aria-describedby="login-error"
               required
             />
           </div>
 
-          <div v-if="errorMessage" class="error-message">
+          <div v-if="errorMessage" id="login-error" role="alert" class="error-message">
             {{ errorMessage }}
           </div>
 
@@ -49,7 +62,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import Button from "@/components/Button.vue";
@@ -66,27 +79,42 @@ const form = reactive({
 const isLoading = ref(false);
 const errorMessage = ref("");
 
-const handleLogin = () => {
+// Разрешаем переход только на внутренние пути (защита от open-redirect)
+const resolveRedirect = (target) => {
+  if (typeof target === "string" && target.startsWith("/") && !target.startsWith("//")) {
+    return target;
+  }
+  return "/";
+};
+
+const handleLogin = async () => {
+  if (isLoading.value) return;
   errorMessage.value = "";
   isLoading.value = true;
 
-  // Вызов метода authStore.login, который возвращает Promise из хелпера
-  authStore
-    .login({
+  try {
+    // Вызов метода authStore.login, который возвращает Promise из хелпера
+    await authStore.login({
       email: form.email,
       password: form.password,
-    })
-    .then(() => {
-      const redirectPath = route.query.redirect || "/";
-      router.push(redirectPath);
-    })
-    .catch((error) => {
-      errorMessage.value = error.message || "Произошла ошибка при входе";
-    })
-    .finally(() => {
-      isLoading.value = false;
     });
+    router.push(resolveRedirect(route.query.redirect));
+  } catch (error) {
+    errorMessage.value = error.message || "Произошла ошибка при входе";
+  } finally {
+    isLoading.value = false;
+  }
 };
+
+// Скрываем ошибку, как только пользователь начинает вводить данные заново
+watch(
+  () => [form.email, form.password],
+  () => {
+    if (errorMessage.value) {
+      errorMessage.value = "";
+    }
+  },
+);
 </script>
 
 <style scoped>
@@ -96,13 +124,6 @@ const handleLogin = () => {
   justify-content: center;
   align-items: center;
   padding: 1.5rem;
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
 }
 
 /* Двухколоночная карточка */
@@ -126,28 +147,11 @@ const handleLogin = () => {
   justify-content: center;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-}
-
-.brand-logo {
-  font-size: 1.5rem;
-}
-
-.brand-name {
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: #111827;
-}
-
 .form-header {
   margin-bottom: 2rem;
 }
 
-.form-header h2 {
+.form-header h1 {
   font-size: 1.75rem;
   font-weight: 700;
   color: #111827;
@@ -204,25 +208,6 @@ const handleLogin = () => {
   background-color: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 10px;
-}
-
-/* Индикатор загрузки (спиннер) */
-.loader {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #ffffff;
-  border-bottom-color: transparent;
-  border-radius: 50%;
-  animation: rotation 1s linear infinite;
-}
-
-@keyframes rotation {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
 }
 
 /* --- ПРАВАЯ КОЛОНКА (ИЗОБРАЖЕНИЕ) --- */
